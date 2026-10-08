@@ -3,6 +3,8 @@ using Metrics.Api;
 using Metrics.Application.Auth;
 using Metrics.Application.Automations;
 using Metrics.Application.Documents;
+using Metrics.Application.Formulas;
+using Metrics.Application.Metrics;
 using Metrics.Infrastructure.Documents;
 using Metrics.Infrastructure;
 using Metrics.Infrastructure.Auth;
@@ -25,6 +27,8 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAutomationService, AutomationService>();
 builder.Services.AddScoped<IDocumentService, DocumentService>();
+builder.Services.AddSingleton<IFormulaEngine, FormulaEngine>();
+builder.Services.AddScoped<IMetricService, MetricService>();
 // Resolve a relative uploads path against the content root so the folder does not depend on the working directory.
 builder.Services.PostConfigure<StorageOptions>(o =>
     o.UploadsPath = Path.GetFullPath(o.UploadsPath, builder.Environment.ContentRootPath));

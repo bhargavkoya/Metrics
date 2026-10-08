@@ -51,6 +51,23 @@ Living document. Updated in the same PR as the code it describes. Last updated: 
 - Web: the detail page has an Overview tab (details plus `DocumentsSection`) and an ROI tab placeholder. Technical users see the drag-and-drop uploader (multi-file, per-file status) and Delete; Business users only see the list and Download. Downloads use an authenticated `fetch` and a blob save because a plain link can't send the bearer token.
 - Config: `Storage:UploadsPath` in `appsettings.json` (relative paths resolve against the API content root; the folder is gitignored).
 
+## Formula engine and metric definitions (Phase 4)
+
+- Layout: `Metrics.Application/Formulas` (pure, no I/O): `Tokenizer` -> `Parser` (AST: `NumberLit`, `MetricRef`, `Negate`, `Binary`) -> `TypeChecker` (uses `TypeRules`) -> `Evaluator`. `FormulaEngine` implements `IFormulaEngine.Analyze` (never throws for bad formulas; returns result type, references and positioned errors) and `Evaluate` (returns null when data makes the result undefined). `MetricType` = value kind plus currency code.
+- Grammar: `expr := term (('+'|'-') term)*`, `term := unary (('*'|'/') unary)*`, `unary := '-' unary | primary`, `primary := NUMBER | '[' label ']' | '(' expr ')'`.
+- Type table (N number, P percentage, C currency, D duration):
+
+  | Op | Allowed -> result |
+  |---|---|
+  | `+` `-` | same type only |
+  | `*` | N*N->N; N*C, N*D, N*P (either order) keep the other type; C*P, D*P (either order) -> C, D |
+  | `/` | C/C, D/D, P/P, N/N -> N; C/N, D/N, P/N keep the left type |
+
+  Currency codes must match for `+ - /`. Error codes: EmptyFormula, TooLong, TooDeep, SyntaxError, UnknownMetric, IncompatibleTypes, IncompatibleCurrency, DivisionByZeroLiteral, NoMetricReference.
+- Endpoints under `/api/automations/{id}/metrics`: `GET` (any employee); `POST` create input or computed, `POST validate-formula` (dry run, always 200), `DELETE {metricId}` (Technical). No update route.
+- Service flow (`MetricService`): validate label and kind, build the input type map from live input definitions, analyze the formula for computed metrics and store the inferred type. `EfMetricRepository` persists and bumps `DataVersion` in the same save; the partial unique index on live labels backs the case-insensitive pre-check.
+- Web: the ROI tab hosts `MetricsPanel` (list, delete with confirm), `AddInputForm`, and `AddComputedForm` with debounced live validation and clickable input chips. Design rationale is in DECISIONS D-009.
+
 ## Planned (not yet built)
 
-Metric definitions and the formula engine, metric logs and the ROI tab, caching and invalidation by `DataVersion`, polling (regular + long poll).
+Metric logs and the ROI tab (reporting, snapshots, chart), caching and invalidation by `DataVersion`, polling (regular + long poll).

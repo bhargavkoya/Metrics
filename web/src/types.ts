@@ -41,3 +41,30 @@ export interface DocumentItem {
   uploadedBy: string
   uploadedAt: string
 }
+
+export type MetricKind = 'Input' | 'Computed'
+export type MetricValueType = 'Number' | 'Percentage' | 'Currency' | 'Duration'
+
+export interface MetricDefinition {
+  id: string
+  label: string
+  kind: MetricKind
+  valueType: MetricValueType
+  currencyCode: string | null
+  formulaText: string | null
+  createdAt: string
+}
+
+export interface FormulaError {
+  code: string
+  message: string
+  position: number
+}
+
+export interface ValidateFormulaResult {
+  valid: boolean
+  resultType: MetricValueType | null
+  currencyCode: string | null
+  references: string[]
+  errors: FormulaError[]
+}
