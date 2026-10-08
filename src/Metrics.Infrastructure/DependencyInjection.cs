@@ -1,6 +1,8 @@
 using Metrics.Application.Abstractions;
 using Metrics.Application.Auth;
 using Metrics.Application.Automations;
+using Metrics.Application.Documents;
+using Metrics.Infrastructure.Documents;
 using Metrics.Infrastructure.Automations;
 using Metrics.Infrastructure.Auth;
 using Metrics.Infrastructure.Health;
@@ -34,6 +36,9 @@ public static class DependencyInjection
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddScoped<IUserRepository, EfUserRepository>();
         services.AddScoped<IAutomationRepository, EfAutomationRepository>();
+        services.Configure<StorageOptions>(config.GetSection(StorageOptions.SectionName));
+        services.AddSingleton<IFileStorage, LocalDiskFileStorage>();
+        services.AddScoped<IDocumentRepository, EfDocumentRepository>();
 
         services.AddScoped<IHealthProbe, DbHealthProbe>();
         services.AddScoped<IHealthProbe, RedisHealthProbe>();

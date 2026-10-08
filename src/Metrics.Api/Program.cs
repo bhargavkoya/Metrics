@@ -2,6 +2,8 @@ using System.Text.Json.Serialization;
 using Metrics.Api;
 using Metrics.Application.Auth;
 using Metrics.Application.Automations;
+using Metrics.Application.Documents;
+using Metrics.Infrastructure.Documents;
 using Metrics.Infrastructure;
 using Metrics.Infrastructure.Auth;
 using Metrics.Infrastructure.Persistence;
@@ -22,6 +24,10 @@ builder.Services.AddProblemDetails();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAutomationService, AutomationService>();
+builder.Services.AddScoped<IDocumentService, DocumentService>();
+// Resolve a relative uploads path against the content root so the folder does not depend on the working directory.
+builder.Services.PostConfigure<StorageOptions>(o =>
+    o.UploadsPath = Path.GetFullPath(o.UploadsPath, builder.Environment.ContentRootPath));
 
 // Fail fast on an unusable signing key. A leftover CHANGE_ME placeholder is only tolerated in Development.
 var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();

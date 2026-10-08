@@ -14,11 +14,21 @@ public class ApiFactory : WebApplicationFactory<Program>
 {
     private readonly string _dbName = Guid.NewGuid().ToString();
 
+    /// <summary>Per-factory temp folder so upload tests never touch the real uploads directory.</summary>
+    public string UploadsPath { get; } = Path.Combine(Path.GetTempPath(), "metrics-tests-" + Guid.NewGuid().ToString("N"));
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing && Directory.Exists(UploadsPath)) Directory.Delete(UploadsPath, recursive: true);
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
         // Real-looking key so the startup placeholder check passes outside Development.
         builder.UseSetting("Jwt:Key", "api-test-signing-key-that-is-long-enough-0123456789");
+        builder.UseSetting("Storage:UploadsPath", UploadsPath);
         builder.ConfigureServices(services =>
         {
             var existing = services.Single(d => d.ServiceType == typeof(DbContextOptions<MetricsDbContext>));

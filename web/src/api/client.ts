@@ -44,3 +44,12 @@ export async function api<T>(path: string, init: RequestInit & { json?: unknown 
 
   throw new ApiError(res.status, body.detail ?? body.title ?? `HTTP ${res.status}`, body.errors)
 }
+
+/** Authenticated binary download (a plain link can't send the bearer token). */
+export async function apiBlob(path: string, signal?: AbortSignal): Promise<Blob> {
+  const token = getToken()
+  const res = await fetch(`/api${path}`, { signal, headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (res.status === 401 && token) onUnauthorized?.()
+  if (!res.ok) throw new ApiError(res.status, res.status === 404 ? 'The file is no longer available.' : `HTTP ${res.status}`)
+  return res.blob()
+}

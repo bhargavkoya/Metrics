@@ -51,4 +51,8 @@ dotnet test --filter "FullyQualifiedName~SomeTestClass.SomeMethod"   # single te
 
 ## Status
 
-Phase 0 (scaffolding) and Phase 1 (auth and team assignment) done. Phase 2 (automation catalog with filters) done. Documents are next.
+Phase 0 (scaffolding) and Phase 1 (auth and team assignment) done. Phase 2 (automation catalog with filters) and Phase 3 (related documents) done. Metric definitions and the formula engine are next.
+
+## Uploads
+
+Related documents are stored on local disk under `Storage:UploadsPath` (default `src/Metrics.Api/uploads`, gitignored) with GUID file names; metadata lives in PostgreSQL. Allowed types: PDF, DOCX, XLSX, PNG, JPG; max 10 MB.

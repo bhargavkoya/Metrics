@@ -2,14 +2,19 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getAutomation } from '../api/automations'
 import { ApiError } from '../api/client'
+import { useAuth } from '../auth/authContext'
+import DocumentsSection from '../components/DocumentsSection'
 import { formatDate } from '../lib/format'
 import type { AutomationDetail } from '../types'
 
-// Stub: documents (Phase 3) and the ROI tab (Phase 5) are added here later.
+type Tab = 'overview' | 'roi'
+
 export default function AutomationDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const { isTechnical } = useAuth()
   const [automation, setAutomation] = useState<AutomationDetail | null>(null)
   const [error, setError] = useState<{ status: number; message: string } | null>(null)
+  const [tab, setTab] = useState<Tab>('overview')
 
   useEffect(() => {
     if (!id) return
@@ -47,6 +52,11 @@ export default function AutomationDetailPage() {
       </div>
     )
 
+  const tabClass = (t: Tab) =>
+    `border-b-2 px-3 py-2 text-sm font-medium ${
+      tab === t ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-gray-800'
+    }`
+
   return (
     <div>
       {back}
@@ -54,23 +64,49 @@ export default function AutomationDetailPage() {
         <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{automation.department}</span>
         <h1 className="mt-2 text-xl font-semibold">{automation.name}</h1>
         <p className="mt-1 text-gray-600">{automation.description}</p>
-
-        <dl className="mt-6 grid gap-4 sm:grid-cols-2">
-          <div>
-            <dt className="text-xs font-medium uppercase text-gray-500">Client</dt>
-            <dd className="mt-1">{automation.client}</dd>
-          </div>
-          <div>
-            <dt className="text-xs font-medium uppercase text-gray-500">Last activity</dt>
-            <dd className="mt-1">{formatDate(automation.lastActivityAt)}</dd>
-          </div>
-          <div className="sm:col-span-2">
-            <dt className="text-xs font-medium uppercase text-gray-500">Business requirement</dt>
-            <dd className="mt-1 whitespace-pre-line">{automation.requirement}</dd>
-          </div>
-        </dl>
       </div>
-      <p className="mt-4 text-xs text-gray-400">Related documents and the ROI tab arrive in later phases.</p>
+
+      <div className="mt-4 flex gap-2 border-b border-gray-200" role="tablist">
+        <button role="tab" aria-selected={tab === 'overview'} className={tabClass('overview')} onClick={() => setTab('overview')}>
+          Overview and documents
+        </button>
+        <button role="tab" aria-selected={tab === 'roi'} className={tabClass('roi')} onClick={() => setTab('roi')}>
+          ROI
+        </button>
+      </div>
+
+      {tab === 'overview' && (
+        <>
+          <div className="mt-4 rounded-lg border border-gray-200 bg-white p-6">
+            <dl className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <dt className="text-xs font-medium uppercase text-gray-500">Client</dt>
+                <dd className="mt-1">{automation.client}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium uppercase text-gray-500">Last activity</dt>
+                <dd className="mt-1">{formatDate(automation.lastActivityAt)}</dd>
+              </div>
+              <div className="sm:col-span-2">
+                <dt className="text-xs font-medium uppercase text-gray-500">Business requirement</dt>
+                <dd className="mt-1 whitespace-pre-line">{automation.requirement}</dd>
+              </div>
+            </dl>
+          </div>
+          <DocumentsSection automationId={automation.id} canEdit={isTechnical} />
+        </>
+      )}
+
+      {tab === 'roi' && (
+        <section className="mt-4 rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center">
+          <p className="font-medium text-gray-700">No metrics defined yet</p>
+          <p className="mt-1 text-sm text-gray-500">
+            {isTechnical
+              ? 'Defining and reporting metrics arrives in a later phase.'
+              : 'A Technical team member needs to define and report metrics for this automation.'}
+          </p>
+        </section>
+      )}
     </div>
   )
 }
