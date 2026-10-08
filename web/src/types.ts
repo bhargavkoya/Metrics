@@ -18,3 +18,17 @@ export interface Session {
   expiresAt: string
   user: User
 }
+
+export interface AutomationCard {
+  id: string
+  name: string
+  description: string
+  department: string
+  lastActivityAt: string
+}
+
+export interface AutomationDetail extends AutomationCard {
+  client: string
+  requirement: string
+  createdAt: string
+}

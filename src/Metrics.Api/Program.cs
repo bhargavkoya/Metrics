@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Metrics.Api;
 using Metrics.Application.Auth;
+using Metrics.Application.Automations;
 using Metrics.Infrastructure;
 using Metrics.Infrastructure.Auth;
 using Metrics.Infrastructure.Persistence;
@@ -20,6 +21,7 @@ builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAutomationService, AutomationService>();
 
 // Fail fast on an unusable signing key. A leftover CHANGE_ME placeholder is only tolerated in Development.
 var jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();

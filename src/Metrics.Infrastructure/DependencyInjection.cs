@@ -1,5 +1,7 @@
 using Metrics.Application.Abstractions;
 using Metrics.Application.Auth;
+using Metrics.Application.Automations;
+using Metrics.Infrastructure.Automations;
 using Metrics.Infrastructure.Auth;
 using Metrics.Infrastructure.Health;
 using Metrics.Infrastructure.Persistence;
@@ -31,6 +33,7 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddScoped<IUserRepository, EfUserRepository>();
+        services.AddScoped<IAutomationRepository, EfAutomationRepository>();
 
         services.AddScoped<IHealthProbe, DbHealthProbe>();
         services.AddScoped<IHealthProbe, RedisHealthProbe>();

@@ -15,3 +15,6 @@ public class ConflictException(string message) : Exception(message);
 
 /// <summary>Mapped to HTTP 401.</summary>
 public class UnauthorizedException(string message) : Exception(message);
+
+/// <summary>Mapped to HTTP 404.</summary>
+public class NotFoundException(string message) : Exception(message);
