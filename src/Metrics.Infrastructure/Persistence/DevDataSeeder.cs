@@ -1,4 +1,7 @@
 using Metrics.Application.Auth;
+using Metrics.Application.Formulas;
+using Metrics.Application.Logs;
+using Metrics.Application.Metrics;
 using Metrics.Domain;
 using Metrics.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -47,6 +50,60 @@ public static class DevDataSeeder
         }
         await SeedAutomationsAsync(db, ct);
         await db.SaveChangesAsync(ct);
+        await SeedDemoMetricsAsync(scope.ServiceProvider, db, ct);
+    }
+
+    private const string DemoAutomation = "Trade Reconciliation Bot";
+
+    /// <summary>
+    /// Gives one automation typed metrics, two formulas and ~12 backdated logs. Definitions go through the real
+    /// MetricService and logs through the real snapshot builder, so seed data obeys exactly the same rules as live data.
+    /// </summary>
+    private static async Task SeedDemoMetricsAsync(IServiceProvider sp, MetricsDbContext db, CancellationToken ct)
+    {
+        var automation = await db.Automations.FirstOrDefaultAsync(a => a.Name == DemoAutomation, ct);
+        var alice = await db.Users.FirstOrDefaultAsync(u => u.Email == "tech.alice@demo.local", ct);
+        if (automation is null || alice is null) return;
+        // Soft-deleted definitions don't count; any live definition or any existing log means someone already set this up.
+        if (await db.MetricDefinitions.AnyAsync(m => m.AutomationId == automation.Id && !m.IsDeleted, ct) ||
+            await db.MetricLogs.AnyAsync(l => l.AutomationId == automation.Id, ct)) return;
+
+        var metrics = sp.GetRequiredService<IMetricService>();
+        Task<MetricDefinitionDto> Input(string label, MetricValueType type, string? currency = null) =>
+            metrics.CreateAsync(automation.Id, alice.Id, new CreateMetricRequest(label, MetricKind.Input, type, currency, null), ct);
+        Task<MetricDefinitionDto> Computed(string label, string formula) =>
+            metrics.CreateAsync(automation.Id, alice.Id, new CreateMetricRequest(label, MetricKind.Computed, null, null, formula), ct);
+
+        var records = await Input("Records processed", MetricValueType.Number);
+        var manualTime = await Input("Manual time per run", MetricValueType.Duration);
+        var autoTime = await Input("Automated time per run", MetricValueType.Duration);
+        var manualCost = await Input("Manual cost per run", MetricValueType.Currency, "USD");
+        var autoCost = await Input("Automated cost per run", MetricValueType.Currency, "USD");
+        await Computed("Time saved per run", "[Manual time per run] - [Automated time per run]");
+        await Computed("Cost saved per run", "[Manual cost per run] - [Automated cost per run]");
+
+        var live = await sp.GetRequiredService<IMetricRepository>().ListLiveAsync(automation.Id, ct);
+        var logs = sp.GetRequiredService<ILogRepository>();
+        var engine = sp.GetRequiredService<IFormulaEngine>();
+
+        // Oldest first, so LastActivityAt ends up at the newest log. A fixed seed keeps the demo data stable.
+        int[] daysAgo = [31, 28, 25, 22, 19, 16, 13, 10, 7, 5, 3, 2];
+        var rnd = new Random(42);
+        for (var i = 0; i < daysAgo.Length; i++)
+        {
+            var progress = (decimal)i / (daysAgo.Length - 1); // 0 -> 1: the automation gets faster and cheaper over time
+            var values = new Dictionary<Guid, decimal>
+            {
+                [records.Id] = Math.Round(3000 + 3000 * progress) + rnd.Next(-150, 150),
+                [manualTime.Id] = 7200 + rnd.Next(-300, 300),
+                [autoTime.Id] = Math.Round(1800 - 900 * progress) + rnd.Next(-60, 60),
+                [manualCost.Id] = 180 + rnd.Next(-8, 8),
+                [autoCost.Id] = Math.Round(60 - 30 * progress) + rnd.Next(-3, 3),
+            };
+            var at = DateTime.UtcNow.Date.AddDays(-daysAgo[i]).AddHours(9);
+            var log = LogSnapshotBuilder.Build(automation.Id, alice.Id, at, live, values, engine);
+            await logs.AddAsync(log, at, ct);
+        }
     }
 
     // Days-ago offsets spread LastActivityAt so the date-range filter has something to show.

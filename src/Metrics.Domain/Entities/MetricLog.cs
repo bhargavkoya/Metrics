@@ -10,7 +10,11 @@ public class MetricLog
     public List<MetricLogValue> Values { get; set; } = [];
 }
 
-/// <summary>Label and type are snapshotted so history renders even after a definition is deleted.</summary>
+/// <summary>
+/// One value in a log. Label, type, currency code and (for computed rows) the formula are copied from the
+/// definition at report time, so history renders and stays unchanged even after the definition is deleted.
+/// A null <see cref="Value"/> on a computed row means the result was undefined (e.g. division by zero).
+/// </summary>
 public class MetricLogValue
 {
     public Guid Id { get; set; }
@@ -20,4 +24,6 @@ public class MetricLogValue
     public decimal? Value { get; set; }
     public string LabelSnapshot { get; set; } = "";
     public MetricValueType ValueTypeSnapshot { get; set; }
+    public string? CurrencyCodeSnapshot { get; set; }
+    public string? FormulaSnapshot { get; set; }
 }

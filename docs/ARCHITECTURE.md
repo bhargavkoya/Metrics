@@ -68,6 +68,13 @@ Living document. Updated in the same PR as the code it describes. Last updated: 
 - Service flow (`MetricService`): validate label and kind, build the input type map from live input definitions, analyze the formula for computed metrics and store the inferred type. `EfMetricRepository` persists and bumps `DataVersion` in the same save; the partial unique index on live labels backs the case-insensitive pre-check.
 - Web: the ROI tab hosts `MetricsPanel` (list, delete with confirm), `AddInputForm`, and `AddComputedForm` with debounced live validation and clickable input chips. Design rationale is in DECISIONS D-009.
 
+## Reporting and the ROI tab (Phase 5)
+
+- Endpoints under `/api/automations/{id}`: `POST logs` (Technical), `GET logs?page&pageSize` (newest first, max 100 per page), `GET roi?points=30` (current figures + chart series + `dataVersion`). Reads are open to any employee.
+- Flow: `LogsController` -> `LogService` (validate against the live input metrics) -> `LogSnapshotBuilder` (pure: input rows + computed rows via `IFormulaEngine.Evaluate`, each with label/type/currency/formula snapshots) -> `EfLogRepository.AddAsync` (log, `LastActivityAt` and `DataVersion` in one save). `RoiService` assembles the read model from the live definitions and the most recent logs.
+- Semantics: history rows are immutable snapshots; current figures and chart series cover live metrics only; series are keyed by definition id; null computed values mean "undefined for this data" (see DECISIONS D-010).
+- Web: the ROI tab (`RoiTab`) stacks `CurrentFigures`, `TrendChart` (Recharts, one metric at a time, axis and tooltip formatted by type), `ReportForm` (Technical only; typed controls, Duration as h/m/s), `LogHistory` ("Load more"), and the metrics management panel. Any write bumps a refresh key that reloads every section.
+
 ## Planned (not yet built)
 
-Metric logs and the ROI tab (reporting, snapshots, chart), caching and invalidation by `DataVersion`, polling (regular + long poll).
+Caching and invalidation by `DataVersion`, polling (regular + long poll).
