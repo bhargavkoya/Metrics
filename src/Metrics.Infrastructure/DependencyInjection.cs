@@ -1,4 +1,6 @@
 using Metrics.Application.Abstractions;
+using Metrics.Application.Auth;
+using Metrics.Infrastructure.Auth;
 using Metrics.Infrastructure.Health;
 using Metrics.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +24,13 @@ public static class DependencyInjection
             o.ConfigurationOptions = redis;
             o.InstanceName = "metrics:";
         });
+
+        services.Configure<JwtOptions>(config.GetSection(JwtOptions.SectionName));
+        services.Configure<SeedOptions>(config.GetSection(SeedOptions.SectionName));
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
+        services.AddSingleton<ITokenService, JwtTokenService>();
+        services.AddScoped<IUserRepository, EfUserRepository>();
 
         services.AddScoped<IHealthProbe, DbHealthProbe>();
         services.AddScoped<IHealthProbe, RedisHealthProbe>();

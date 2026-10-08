@@ -22,3 +22,16 @@ Approved as "go with defaults":
 
 ## D-004: Workflow (2026-10-08)
 One branch per phase off `main`, PR per phase, user merges. The repo's initial `master` branch was renamed to `main`, with a baseline commit (CLAUDE.md, PRD, .gitignore) made directly on it.
+
+## D-005: Config in one file with CHANGE_ME placeholders (2026-10-08)
+Overrides the original "user-secrets / env vars" convention at the user's request, so every value to update is trackable in one place. `appsettings.json` holds `Jwt:Key` and `Seed:DevPassword` as `CHANGE_ME...` placeholders; `grep CHANGE_ME` lists them. Real values go in the gitignored optional `appsettings.Local.json`. Startup fails if `Jwt:Key` is under 32 chars anywhere, or still a placeholder outside Development (Development logs a warning). Tradeoff: a dev who never overrides the key runs locally with a publicly known one.
+
+## D-006: Auth design (2026-10-08)
+- Self-service register (team chosen by the user) and login return a JWT (HS256, 8h, no refresh token). Claims: `sub`, `email`, `name`, `team`. `MapInboundClaims=false` keeps claim names as issued.
+- Passwords hashed with ASP.NET `PasswordHasher` (PBKDF2). Login returns one generic 401 for unknown email and wrong password.
+- Authorization: fallback policy requires an authenticated user; `Technical` policy checks the `team` claim. Health and register/login are anonymous. Team is read from the token, so a team change takes effect at next login.
+- Web stores the token in `localStorage` (XSS exposure vs httpOnly cookie; accepted for a POC). Any 401 with a token clears the session.
+- `GET /api/auth/technical-check` is temporary, to demo/test the policy; remove once real Technical endpoints exist.
+- Development startup applies migrations and seeds 4 demo users (2 Technical, 2 Business) with `Seed:DevPassword`. Not run in other environments.
+- Docker services use `restart: unless-stopped`.
+

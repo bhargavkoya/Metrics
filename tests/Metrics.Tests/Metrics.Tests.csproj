@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.11" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="Moq" Version="4.21.0" />
     <PackageReference Include="xunit" Version="2.5.3" />
@@ -24,6 +26,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Metrics.Application\Metrics.Application.csproj" />
     <ProjectReference Include="..\..\src\Metrics.Domain\Metrics.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Metrics.Api\Metrics.Api.csproj" />
+    <ProjectReference Include="..\..\src\Metrics.Infrastructure\Metrics.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
