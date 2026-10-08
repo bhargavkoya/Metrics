@@ -53,4 +53,4 @@ Living document. Updated in the same PR as the code it describes. Last updated: 
 
 ## Planned (not yet built)
 
-Formula engine, caching and invalidation by `DataVersion`, polling (regular + long poll), upload storage.
+Metric definitions and the formula engine, metric logs and the ROI tab, caching and invalidation by `DataVersion`, polling (regular + long poll).
