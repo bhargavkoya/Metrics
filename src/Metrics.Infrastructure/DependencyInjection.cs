@@ -1,0 +1,30 @@
+using Metrics.Application.Abstractions;
+using Metrics.Infrastructure.Health;
+using Metrics.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
+
+namespace Metrics.Infrastructure;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration config)
+    {
+        services.AddDbContext<MetricsDbContext>(o => o.UseNpgsql(config.GetConnectionString("Postgres")));
+
+        services.AddStackExchangeRedisCache(o =>
+        {
+            var redis = ConfigurationOptions.Parse(config.GetConnectionString("Redis")!);
+            redis.AbortOnConnectFail = false;
+            redis.ConnectTimeout = 2000;
+            o.ConfigurationOptions = redis;
+            o.InstanceName = "metrics:";
+        });
+
+        services.AddScoped<IHealthProbe, DbHealthProbe>();
+        services.AddScoped<IHealthProbe, RedisHealthProbe>();
+        return services;
+    }
+}
