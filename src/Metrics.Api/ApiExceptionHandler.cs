@@ -22,6 +22,9 @@ public class ApiExceptionHandler(IProblemDetailsService problems) : IExceptionHa
             case ConflictException c:
                 problem = new ProblemDetails { Status = StatusCodes.Status409Conflict, Title = "Conflict", Detail = c.Message };
                 break;
+            case NotFoundException n:
+                problem = new ProblemDetails { Status = StatusCodes.Status404NotFound, Title = "Not found", Detail = n.Message };
+                break;
             case UnauthorizedException u:
                 problem = new ProblemDetails { Status = StatusCodes.Status401Unauthorized, Title = "Unauthorized", Detail = u.Message };
                 break;

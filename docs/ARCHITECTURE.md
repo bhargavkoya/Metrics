@@ -34,6 +34,15 @@ Living document. Updated in the same PR as the code it describes. Last updated: 
 - Web: `AuthProvider` keeps the session in React state mirrored to `localStorage`; `api/client.ts` attaches the bearer token and logs out on 401; `ProtectedRoute` guards pages.
 - Config: see DECISIONS D-005 (`Jwt:*`, `Seed:*` in `appsettings.json`, overrides in `appsettings.Local.json`).
 
+## Catalog (Phase 2)
+
+- Endpoints (any authenticated employee, read-only, global access): `GET /api/automations` (cards), `GET /api/automations/departments`, `GET /api/automations/{id}` (detail). No create/update/delete (automations are seeded; D-002).
+- `GET /api/automations` query params, all optional and ANDed: `from`, `to` (date range on `LastActivityAt`), `department` (exact, case-insensitive), `q` (case-insensitive substring of name or description). Results are ordered by `LastActivityAt` desc, then name. Cards carry no metric aggregates (PRD: plain catalog).
+- Date semantics: dates are treated as UTC. A bare `to` date includes that whole day; `from` > `to` returns 400. Normalization lives in `AutomationService.Normalize`; the repository only receives a ready query.
+- `NotFoundException` maps to 404 in `ApiExceptionHandler`.
+- Web: `CatalogPage` keeps filters in the URL query string (`q` is debounced 300 ms); `AutomationDetailPage` is a stub until documents (Phase 3) and ROI (Phase 5).
+- Dev seed: 6 automations across Capital Allocation, Investment Operations, Risk and Compliance, with activity 2 to 57 days ago (relative to startup, only inserted if missing by name).
+
 ## Planned (not yet built)
 
-Catalog and detail, formula engine, caching and invalidation by `DataVersion`, polling (regular + long poll), upload storage.
+Documents, formula engine, caching and invalidation by `DataVersion`, polling (regular + long poll), upload storage.

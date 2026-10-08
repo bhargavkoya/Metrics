@@ -17,6 +17,7 @@ cd web && npm install && npm run dev                   # http://localhost:5173
 
 - Swagger: http://localhost:5223/swagger
 - Health: http://localhost:5223/api/health
+- Catalog: `GET /api/automations?from=&to=&department=&q=` (log in first; see Swagger)
 
 Host ports are non-default (5434, 6380) to avoid clashing with other local Postgres/Redis instances.
 
@@ -50,4 +51,4 @@ dotnet test --filter "FullyQualifiedName~SomeTestClass.SomeMethod"   # single te
 
 ## Status
 
-Phase 0 (scaffolding) and Phase 1 (auth and team assignment) done. Catalog is next.
+Phase 0 (scaffolding) and Phase 1 (auth and team assignment) done. Phase 2 (automation catalog with filters) done. Documents are next.

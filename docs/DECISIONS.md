@@ -35,3 +35,10 @@ Overrides the original "user-secrets / env vars" convention at the user's reques
 - Development startup applies migrations and seeds 4 demo users (2 Technical, 2 Business) with `Seed:DevPassword`. Not run in other environments.
 - Docker services use `restart: unless-stopped`.
 
+
+## D-007: Catalog filters and seeding (2026-10-08)
+- Search is a case-insensitive substring match on name and description (`ToLower().Contains`), chosen over `ILIKE` so it is portable to the InMemory test provider; `%` and `_` are literal, so no wildcard escaping is needed. Fine at POC scale; a trigram or full-text index would be the production route.
+- Department is an exact case-insensitive match, fed by a distinct-values endpoint.
+- Date filter works on `LastActivityAt`; a bare `to` date covers the whole day; `from` > `to` is a 400 (server) and an inline message (web).
+- No pagination (PRD gives no volume); revisit if the catalog grows.
+- Seed activity dates are relative to startup time, and automations are matched by name, so re-running never duplicates. Sample metric logs for one automation are deferred to Phase 5, when real definitions exist to snapshot.
