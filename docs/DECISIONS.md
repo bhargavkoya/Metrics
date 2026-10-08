@@ -42,3 +42,13 @@ Overrides the original "user-secrets / env vars" convention at the user's reques
 - Date filter works on `LastActivityAt`; a bare `to` date covers the whole day; `from` > `to` is a 400 (server) and an inline message (web).
 - No pagination (PRD gives no volume); revisit if the catalog grows.
 - Seed activity dates are relative to startup time, and automations are matched by name, so re-running never duplicates. Sample metric logs for one automation are deferred to Phase 5, when real definitions exist to snapshot.
+
+## D-008: Document upload design (2026-10-08)
+- Allowlist PDF, DOCX, XLSX, PNG, JPG/JPEG; 10 MB cap; the extension must match the file's magic bytes (OOXML is only checked for the ZIP signature, no deeper inspection). The stored content type comes from the validated extension, never from the client's header. Served with `Content-Disposition: attachment` and `X-Content-Type-Options: nosniff`.
+- Blobs are stored flat under `Storage:UploadsPath` as `{guid}{ext}`. `LocalDiskFileStorage` accepts only that exact pattern, re-checks the resolved path, and opens with `CreateNew` so it never overwrites. The original name lives only in the database and is stripped of path parts and control characters.
+- The upload is buffered in memory (max 10 MB + 1 byte) so the size is measured from the bytes actually read rather than `Content-Length`, and the signature can be checked before anything touches disk. Acceptable at this cap; the production route is streaming to object storage.
+- One file per request; the web app sends multiple files as parallel requests. The request body limit is 12 MB: files between 10 and 12 MB get a clear 400, larger bodies get 413 from Kestrel.
+- Upload and delete set the automation's `LastActivityAt` (it drives the catalog date filter) but do not bump `DataVersion` (documents don't affect ROI data).
+- If the metadata insert fails after the blob is written, the blob is deleted. Delete removes the row first, then the blob. A blob missing on disk makes download return 404.
+- Documents are looked up by (automationId, documentId), so a document cannot be reached through another automation's URL.
+- Lesson: EF's InMemory provider evaluates queries client-side, so it hid an untranslatable `OrderBy` over a constructed DTO that failed on Postgres (caught in a live run, fixed by ordering before the projection). Repository queries with joins or projections need a run against real Postgres, not only the InMemory tests.

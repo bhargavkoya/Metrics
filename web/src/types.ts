@@ -32,3 +32,12 @@ export interface AutomationDetail extends AutomationCard {
   requirement: string
   createdAt: string
 }
+
+export interface DocumentItem {
+  id: string
+  originalFileName: string
+  contentType: string
+  sizeBytes: number
+  uploadedBy: string
+  uploadedAt: string
+}

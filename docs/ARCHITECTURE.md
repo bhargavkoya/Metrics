@@ -43,6 +43,14 @@ Living document. Updated in the same PR as the code it describes. Last updated: 
 - Web: `CatalogPage` keeps filters in the URL query string (`q` is debounced 300 ms); `AutomationDetailPage` is a stub until documents (Phase 3) and ROI (Phase 5).
 - Dev seed: 6 automations across Capital Allocation, Investment Operations, Risk and Compliance, with activity 2 to 57 days ago (relative to startup, only inserted if missing by name).
 
+## Documents (Phase 3)
+
+- Endpoints under `/api/automations/{automationId}/documents`: `GET` list and `GET {id}/download` for any employee; `POST` (multipart field `file`) and `DELETE {id}` for the Technical team only.
+- Flow: `DocumentsController` -> `DocumentService` (Application: validation via the pure `FileValidator`, orchestration, orphan cleanup) -> `IFileStorage` (`LocalDiskFileStorage`) and `IDocumentRepository` (`EfDocumentRepository`, which also bumps `LastActivityAt` in the same save).
+- Security properties are listed in DECISIONS D-008: GUID file names, extension allowlist plus magic bytes, size cap, path-traversal guards, per-automation lookup, attachment-only downloads.
+- Web: the detail page has an Overview tab (details plus `DocumentsSection`) and an ROI tab placeholder. Technical users see the drag-and-drop uploader (multi-file, per-file status) and Delete; Business users only see the list and Download. Downloads use an authenticated `fetch` and a blob save because a plain link can't send the bearer token.
+- Config: `Storage:UploadsPath` in `appsettings.json` (relative paths resolve against the API content root; the folder is gitignored).
+
 ## Planned (not yet built)
 
-Documents, formula engine, caching and invalidation by `DataVersion`, polling (regular + long poll), upload storage.
+Metric definitions and the formula engine, metric logs and the ROI tab, caching and invalidation by `DataVersion`, polling (regular + long poll).
