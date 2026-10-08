@@ -4,6 +4,7 @@ import { getAutomation } from '../api/automations'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/authContext'
 import DocumentsSection from '../components/DocumentsSection'
+import MetricsPanel from '../components/metrics/MetricsPanel'
 import { formatDate } from '../lib/format'
 import type { AutomationDetail } from '../types'
 
@@ -97,16 +98,7 @@ export default function AutomationDetailPage() {
         </>
       )}
 
-      {tab === 'roi' && (
-        <section className="mt-4 rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center">
-          <p className="font-medium text-gray-700">No metrics defined yet</p>
-          <p className="mt-1 text-sm text-gray-500">
-            {isTechnical
-              ? 'Defining and reporting metrics arrives in a later phase.'
-              : 'A Technical team member needs to define and report metrics for this automation.'}
-          </p>
-        </section>
-      )}
+      {tab === 'roi' && <MetricsPanel automationId={automation.id} canEdit={isTechnical} />}
     </div>
   )
 }

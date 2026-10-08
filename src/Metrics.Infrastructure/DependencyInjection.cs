@@ -2,6 +2,8 @@ using Metrics.Application.Abstractions;
 using Metrics.Application.Auth;
 using Metrics.Application.Automations;
 using Metrics.Application.Documents;
+using Metrics.Application.Metrics;
+using Metrics.Infrastructure.Metrics;
 using Metrics.Infrastructure.Documents;
 using Metrics.Infrastructure.Automations;
 using Metrics.Infrastructure.Auth;
@@ -39,6 +41,7 @@ public static class DependencyInjection
         services.Configure<StorageOptions>(config.GetSection(StorageOptions.SectionName));
         services.AddSingleton<IFileStorage, LocalDiskFileStorage>();
         services.AddScoped<IDocumentRepository, EfDocumentRepository>();
+        services.AddScoped<IMetricRepository, EfMetricRepository>();
 
         services.AddScoped<IHealthProbe, DbHealthProbe>();
         services.AddScoped<IHealthProbe, RedisHealthProbe>();
