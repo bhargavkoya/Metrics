@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Metrics.Api;
 using Metrics.Application.Auth;
+using Metrics.Application.Caching;
 using Metrics.Application.Automations;
 using Metrics.Application.Documents;
 using Metrics.Application.Formulas;
@@ -31,7 +32,15 @@ builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddSingleton<IFormulaEngine, FormulaEngine>();
 builder.Services.AddScoped<IMetricService, MetricService>();
 builder.Services.AddScoped<ILogService, LogService>();
-builder.Services.AddScoped<IRoiService, RoiService>();
+// ROI reads go through a read-through cache; RoiService does the actual assembly.
+builder.Services.AddScoped<RoiService>();
+builder.Services.AddScoped<CacheTrace>();
+builder.Services.AddScoped<IRoiService>(sp => new CachedRoiService(
+    sp.GetRequiredService<RoiService>(), sp.GetRequiredService<ILogRepository>(), sp.GetRequiredService<IMetricCache>(),
+    sp.GetRequiredService<RoiSettings>(), sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<CacheTrace>()));
+builder.Services.AddScoped<IRoiLongPoll, RoiLongPollService>();
+builder.Services.AddScoped<IStaleFlagStore, CacheStaleFlagStore>();
+builder.Services.AddScoped<RoiWarmer>();
 // Resolve a relative uploads path against the content root so the folder does not depend on the working directory.
 builder.Services.PostConfigure<StorageOptions>(o =>
     o.UploadsPath = Path.GetFullPath(o.UploadsPath, builder.Environment.ContentRootPath));

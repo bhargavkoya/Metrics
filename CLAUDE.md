@@ -60,7 +60,7 @@ Cross-cutting design that spans files:
 - **Immutable formulas**: no edit path. Delete + recreate only. Deleting a computed metric removes it going forward; historical logs are never rewritten or recomputed.
 - **Metric logs** store reporter, timestamp, input values, AND the computed values as of report time (snapshot, so history stays stable after formula deletion).
 - **Typed values**: number, percentage, currency, duration. The type drives both validation and display formatting.
-- **Caching**: Redis caches computed/aggregated ROI reads; invalidate when a new log is added or a computed metric is deleted. A background worker warms the cache and flags stale data (keep it simple).
+- **Caching and polling**: the ROI read (`GET .../roi`) is cached in Redis under a key that includes the automation's `DataVersion`. **Any new write that changes what the ROI payload shows must bump `DataVersion` in the same save and call `IChangeNotifier.Notify`**: that is what invalidates the cache and wakes long-polling clients. `IMetricCache` never throws (Hit/Miss/Unavailable); with Redis down, reads are served from Postgres. A background worker warms the cache and flags automations whose latest report is older than `Roi:StaleAfterDays`. See `docs/DECISIONS.md` D-011.
 - **Uploads**: extensions PDF, DOCX, XLSX, PNG, JPG; 10 MB cap; store under a generated GUID filename, keep original name in DB; never trust client filenames; guard against path traversal.
 
 ## Domain rules (do not deviate)
@@ -73,3 +73,5 @@ Cross-cutting design that spans files:
 ## Testing
 
 xUnit + Moq. Focus: formula parser/validator/evaluator, type compatibility, immutability, and log recomputation rules.
+
+The EF InMemory provider evaluates queries client-side and hides translation errors (for example, `OrderBy` over a constructed DTO fails on Postgres). After changing a repository query, run it once against the real database through the API, not only the tests.

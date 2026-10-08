@@ -51,7 +51,7 @@ dotnet test --filter "FullyQualifiedName~SomeTestClass.SomeMethod"   # single te
 
 ## Status
 
-Phase 0 (scaffolding) and Phase 1 (auth and team assignment) done. Phase 2 (automation catalog with filters) and Phase 3 (related documents) and Phase 4 (formula engine and metric definitions) and Phase 5 (reporting, chart, history) done. Caching and polling are next.
+Phase 0 (scaffolding) and Phase 1 (auth and team assignment) done. Phase 2 (automation catalog with filters) and Phase 3 (related documents) and Phase 4 (formula engine and metric definitions) and Phase 5 (reporting, chart, history) and Phase 6 (Redis caching, polling, background worker) done. All PRD section 7 MVP phases are complete.
 
 ## Uploads
 
@@ -60,3 +60,24 @@ Related documents are stored on local disk under `Storage:UploadsPath` (default 
 ## Demo data
 
 In Development the API seeds the "Trade Reconciliation Bot" automation with typed metrics (records, manual and automated time per run, manual and automated cost per run), two computed metrics (time saved, cost saved) and 12 historical reports, so the ROI tab has a chart and history on first run. Log in as a Technical user to report new values.
+
+## Caching, polling and the worker
+
+The ROI read is cached in Redis (the key includes the automation's data version; see `docs/ARCHITECTURE.md`). The ROI tab updates by long polling and the catalog by regular polling every 30 s; there is no SignalR or WebSocket. A background worker warms the cache and flags automations whose latest report is older than `Roi:StaleAfterDays`. Tunables are in the `Roi` section of `appsettings.json` (none are secrets).
+
+Useful checks:
+
+```
+curl -i -H "Authorization: Bearer <token>" http://localhost:5223/api/automations/<id>/roi   # X-Cache: HIT | MISS | BYPASS
+docker compose exec redis redis-cli --scan --pattern 'metrics:*'                             # cached keys
+docker compose stop redis                                                                    # the API keeps working (BYPASS)
+```
+
+## Demo script (PRD section 7, end to end)
+
+1. Log in as `tech.alice@demo.local` and open the catalog: six cards; try the department filter, search and date range.
+2. Open "Trade Reconciliation Bot": client and requirement; upload a PDF under Related documents and download it again.
+3. ROI tab: current figures, trend (switch metrics), history. Add a metric of your own: an input, then a computed metric with a formula; try a bad formula to see the positioned error.
+4. Report a new set of values: figures, chart and history update, and the computed metrics are calculated.
+5. Open the same automation in a second browser window as `biz.carol@demo.local` (read-only). Report again from Alice's window: Carol's view updates on its own within a second.
+6. Delete a computed metric and recreate it with a different formula: the old history keeps the old numbers.

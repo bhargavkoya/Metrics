@@ -116,6 +116,7 @@ public class LogServiceTests
     private MetricLog? _saved;
     private DateTime? _activity;
     private readonly LogService _sut;
+    private Mock<global::Metrics.Application.Logs.IChangeNotifier> Notifier { get; } = new();
 
     private readonly MetricDefinition _records = Defs.Input("Records", MetricValueType.Number);
     private readonly MetricDefinition _time = Defs.Input("Time", MetricValueType.Duration);
@@ -136,7 +137,7 @@ public class LogServiceTests
             .Returns(Task.CompletedTask);
         _logs.Setup(l => l.GetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => new LogWithReporter(_saved!, "Alice"));
-        _sut = new LogService(_metrics.Object, _logs.Object, new FormulaEngine(), new FixedClock(Now));
+        _sut = new LogService(_metrics.Object, _logs.Object, new FormulaEngine(), new FixedClock(Now), Notifier.Object);
     }
 
     private ReportLogRequest Full(decimal records = 10, decimal time = 60, decimal rate = 5) => new(
@@ -170,6 +171,33 @@ public class LogServiceTests
 
         _metrics.Verify(m => m.AddAsync(It.IsAny<MetricDefinition>(), It.IsAny<CancellationToken>()), Times.Never);
         _metrics.Verify(m => m.SoftDeleteAsync(It.IsAny<MetricDefinition>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task SuccessfulReport_SignalsTheChange_ExactlyOnce()
+    {
+        await _sut.ReportAsync(AutomationId, UserId, Full(), default);
+
+        Notifier.Verify(n => n.Notify(AutomationId), Times.Once);
+    }
+
+    [Fact]
+    public async Task RejectedReport_DoesNotSignalAnything()
+    {
+        await Assert.ThrowsAsync<ValidationFailedException>(() => _sut.ReportAsync(AutomationId, UserId, Full(time: -1), default));
+
+        Notifier.Verify(n => n.Notify(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task FailedSave_DoesNotSignalAnything()
+    {
+        _logs.Setup(l => l.AddAsync(It.IsAny<MetricLog>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("db down"));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.ReportAsync(AutomationId, UserId, Full(), default));
+
+        Notifier.Verify(n => n.Notify(It.IsAny<Guid>()), Times.Never);
     }
 
     [Fact]

@@ -5,7 +5,8 @@ using Metrics.Domain;
 
 namespace Metrics.Application.Logs;
 
-public class LogService(IMetricRepository metrics, ILogRepository logs, IFormulaEngine engine, TimeProvider clock) : ILogService
+public class LogService(
+    IMetricRepository metrics, ILogRepository logs, IFormulaEngine engine, TimeProvider clock, IChangeNotifier notifier) : ILogService
 {
     public const int MaxPageSize = 100;
 
@@ -27,6 +28,7 @@ public class LogService(IMetricRepository metrics, ILogRepository logs, IFormula
         var reportedAt = clock.GetUtcNow().UtcDateTime;
         var log = LogSnapshotBuilder.Build(automationId, userId, reportedAt, live, values, engine);
         await logs.AddAsync(log, reportedAt, ct);
+        notifier.Notify(automationId); // wake any long-polling ROI tabs
 
         var saved = await logs.GetAsync(log.Id, ct) ?? throw new InvalidOperationException("Log vanished after insert.");
         return ToDto(saved);

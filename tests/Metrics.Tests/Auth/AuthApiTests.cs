@@ -29,11 +29,17 @@ public class ApiFactory : WebApplicationFactory<Program>
         // Real-looking key so the startup placeholder check passes outside Development.
         builder.UseSetting("Jwt:Key", "api-test-signing-key-that-is-long-enough-0123456789");
         builder.UseSetting("Storage:UploadsPath", UploadsPath);
+        builder.UseSetting("Roi:WarmerEnabled", "false"); // tests drive the warmer directly; no background timers
         builder.ConfigureServices(services =>
         {
             var existing = services.Single(d => d.ServiceType == typeof(DbContextOptions<MetricsDbContext>));
             services.Remove(existing);
             services.AddDbContext<MetricsDbContext>(o => o.UseInMemoryDatabase(_dbName));
+
+            // No Redis in tests: swap the distributed cache for the in-memory implementation.
+            foreach (var d in services.Where(d => d.ServiceType == typeof(Microsoft.Extensions.Caching.Distributed.IDistributedCache)).ToList())
+                services.Remove(d);
+            services.AddDistributedMemoryCache();
         });
     }
 }

@@ -1,15 +1,20 @@
 using Metrics.Application.Common;
+using Metrics.Application.Logs;
 using Metrics.Domain.Entities;
 
 namespace Metrics.Application.Automations;
 
-public class AutomationService(IAutomationRepository repo) : IAutomationService
+public class AutomationService(IAutomationRepository repo, IStaleFlagStore staleFlags) : IAutomationService
 {
     public async Task<IReadOnlyList<AutomationCardDto>> ListAsync(AutomationFilter filter, CancellationToken ct)
     {
         var query = Normalize(filter);
         var items = await repo.ListAsync(query, ct);
-        return items.Select(a => new AutomationCardDto(a.Id, a.Name, a.Description, a.Department, a.LastActivityAt)).ToList();
+        var stale = await staleFlags.GetAsync(ct);
+
+        return items
+            .Select(a => new AutomationCardDto(a.Id, a.Name, a.Description, a.Department, a.LastActivityAt, stale.Contains(a.Id)))
+            .ToList();
     }
 
     public async Task<AutomationDetailDto> GetAsync(Guid id, CancellationToken ct)
