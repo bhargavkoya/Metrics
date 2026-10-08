@@ -12,8 +12,9 @@ This is a base-level interview POC (Automation Metrics Dashboard): a demoable sk
 
 - Plan before coding on any new phase; wait for user approval.
 - After each phase: build, run tests, and tell the user exactly how to verify manually.
-- If the PRD is ambiguous, ask; don't silently decide. (Known gap: the PRD asks for a "team/department filter" on the catalog, but automations have no team/department field defined, so ask what it filters on.)
-- Small commits, clear messages. Secrets via user-secrets / env vars, never committed.
+- If the PRD is ambiguous, ask; don't silently decide. Resolved ambiguities are in `docs/DECISIONS.md` (D-002), e.g. the catalog department filter uses a `Department` string on Automation.
+- Small commits, clear messages.
+- **Config and secrets** live in one place: `src/Metrics.Api/appsettings.json`, with `CHANGE_ME...` placeholders for anything secret (JWT key, seed password) so the user can grep for what to update. Do not scatter secrets into user-secrets, env vars or code. Real values go in the gitignored `appsettings.Local.json` (loaded last, optional); never commit them. The app refuses to start outside Development with a placeholder JWT key.
 
 ## Git workflow
 

@@ -20,6 +20,27 @@ cd web && npm install && npm run dev                   # http://localhost:5173
 
 Host ports are non-default (5434, 6380) to avoid clashing with other local Postgres/Redis instances.
 
+## Configuration and secrets
+
+All settings are in `src/Metrics.Api/appsettings.json`. Values you must change are marked `CHANGE_ME`; find them with:
+
+```
+grep -rn CHANGE_ME src/Metrics.Api/appsettings.json
+```
+
+Put real values in `src/Metrics.Api/appsettings.Local.json` (gitignored, optional, loaded last), mirroring the same keys, e.g. `{ "Jwt": { "Key": "<random 32+ chars>" } }`. In Development the placeholder key works with a warning; any other environment refuses to start with it.
+
+## Demo accounts (Development only)
+
+On startup in Development the API applies migrations and seeds these users. The password is `Seed:DevPassword` from config (default `CHANGE_ME_Password123!`):
+
+| Email | Team |
+|---|---|
+| tech.alice@demo.local, tech.bob@demo.local | Technical |
+| biz.carol@demo.local, biz.dave@demo.local | Business |
+
+You can also register your own account at http://localhost:5173/register.
+
 ## Test
 
 ```
@@ -29,4 +50,4 @@ dotnet test --filter "FullyQualifiedName~SomeTestClass.SomeMethod"   # single te
 
 ## Status
 
-Phase 0 (scaffolding) only. No auth or features yet.
+Phase 0 (scaffolding) and Phase 1 (auth and team assignment) done. Catalog is next.

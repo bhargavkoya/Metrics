@@ -26,6 +26,14 @@ Living document. Updated in the same PR as the code it describes. Last updated: 
 - `GET /api/health` runs every registered `IHealthProbe` (postgres, redis) and returns 200 or 503 with per-check detail.
 - Local Docker ports are 5434 (Postgres) and 6380 (Redis); see DECISIONS #D-001.
 
+## Auth (Phase 1)
+
+- Flow: `POST /api/auth/register|login` -> `AuthService` (Application) -> `IUserRepository` (EF), `IPasswordHasher` (ASP.NET PBKDF2), `ITokenService` (JWT HS256). Response is `{ token, expiresAt, user }`.
+- The API validates the bearer token (issuer, audience, signature, lifetime). Authorization: a fallback policy requires any authenticated user; the `Technical` policy requires claim `team=Technical`. Use `[Authorize(Policy = Policies.Technical)]` on write endpoints; `[AllowAnonymous]` only on health and register/login.
+- Application exceptions (`ValidationFailedException` 400, `ConflictException` 409, `UnauthorizedException` 401) are mapped to ProblemDetails by `ApiExceptionHandler`.
+- Web: `AuthProvider` keeps the session in React state mirrored to `localStorage`; `api/client.ts` attaches the bearer token and logs out on 401; `ProtectedRoute` guards pages.
+- Config: see DECISIONS D-005 (`Jwt:*`, `Seed:*` in `appsettings.json`, overrides in `appsettings.Local.json`).
+
 ## Planned (not yet built)
 
-Formula engine, caching and invalidation by `DataVersion`, polling (regular + long poll), upload storage, auth. Designs are in the Phase 0 planning discussion and will be written here as each phase lands.
+Catalog and detail, formula engine, caching and invalidation by `DataVersion`, polling (regular + long poll), upload storage.

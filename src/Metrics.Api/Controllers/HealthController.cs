@@ -1,9 +1,11 @@
 using Metrics.Application.Abstractions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Metrics.Api.Controllers;
 
 [ApiController]
+[AllowAnonymous]
 [Route("api/health")]
 public class HealthController(IEnumerable<IHealthProbe> probes) : ControllerBase
 {
