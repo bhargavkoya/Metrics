@@ -25,9 +25,4 @@ public class AuthController(IAuthService auth) : ControllerBase
         if (!Guid.TryParse(sub, out var id)) return Unauthorized();
         return Ok(await auth.GetCurrentAsync(id, ct));
     }
-
-    /// <summary>Temporary: exercises the Technical policy until real Technical endpoints exist (remove then).</summary>
-    [Authorize(Policy = Policies.Technical)]
-    [HttpGet("technical-check")]
-    public IActionResult TechnicalCheck() => Ok(new { ok = true });
 }

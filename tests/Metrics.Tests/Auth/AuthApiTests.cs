@@ -89,16 +89,22 @@ public class AuthApiTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task TechnicalPolicy_Business_Gets403_Technical_Gets200()
+    public async Task TechnicalPolicy_Business_Gets403_Technical_PassesAuthorization()
     {
         var biz = await RegisterAsync("Business");
         var tech = await RegisterAsync("Technical");
+        // A real Technical-only endpoint. The automation does not exist, so a Technical user is authorized and then gets a
+        // 404, while a Business user is stopped by the policy before the action runs.
+        var url = $"/api/automations/{Guid.NewGuid()}/metrics/validate-formula";
 
-        var bizRes = await _client.SendAsync(Get("/api/auth/technical-check", biz.Token));
-        var techRes = await _client.SendAsync(Get("/api/auth/technical-check", tech.Token));
+        HttpRequestMessage Post(string token) => new(HttpMethod.Post, url)
+        {
+            Content = JsonContent.Create(new { formula = "[a] + 1" }),
+            Headers = { Authorization = new AuthenticationHeaderValue("Bearer", token) }
+        };
 
-        Assert.Equal(HttpStatusCode.Forbidden, bizRes.StatusCode);
-        Assert.Equal(HttpStatusCode.OK, techRes.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await _client.SendAsync(Post(biz.Token))).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await _client.SendAsync(Post(tech.Token))).StatusCode);
     }
 
     [Fact]
