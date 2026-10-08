@@ -30,6 +30,7 @@ Maintain these under `docs/`; update them in the same PR as the code they descri
 - `docs/ARCHITECTURE.md`: solution structure, domain model, formula engine, caching, polling, upload design, API surface. Update when any of these change.
 - `docs/DECISIONS.md`: running decision log (ADR-lite: number, date, decision, context, alternatives, consequences). Add an entry for every non-trivial choice or resolved PRD ambiguity, e.g. the department filter source, date-range basis, `C/C` result type.
 - `docs/LOCAL_TESTING.md`: step-by-step local run and manual test guide (Windows/PowerShell). Update it when behaviour a tester would see changes.
+- `docs/INTERVIEW_NOTES.md` and `docs/DEMO_SCRIPT.md`: how to explain the project and a timed 5-minute demo. They quote numbers (test count, TTLs, limits); update them when those change.
 - `README.md`: setup and run instructions; keep the Commands section here and in this file consistent.
 - Also record PRD deviations or clarifications in `DECISIONS.md` rather than silently diverging. The PRD itself (`docs/*.docx`) is not edited.
 
