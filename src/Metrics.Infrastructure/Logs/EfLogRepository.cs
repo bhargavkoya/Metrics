@@ -53,6 +53,9 @@ public class EfLogRepository(MetricsDbContext db) : ILogRepository
     public Task<long> GetDataVersionAsync(Guid automationId, CancellationToken ct) =>
         db.Automations.AsNoTracking().Where(a => a.Id == automationId).Select(a => a.DataVersion).FirstOrDefaultAsync(ct);
 
+    public Task<List<Guid>> GetAutomationIdsWithLogsAsync(CancellationToken ct) =>
+        db.MetricLogs.AsNoTracking().Select(l => l.AutomationId).Distinct().ToListAsync(ct);
+
     // Reporter names come from a second query rather than a join, which keeps the ordered, paged entity query simple.
     private async Task<List<LogWithReporter>> WithReportersAsync(List<MetricLog> logs, CancellationToken ct)
     {

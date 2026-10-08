@@ -75,6 +75,30 @@ Living document. Updated in the same PR as the code it describes. Last updated: 
 - Semantics: history rows are immutable snapshots; current figures and chart series cover live metrics only; series are keyed by definition id; null computed values mean "undefined for this data" (see DECISIONS D-010).
 - Web: the ROI tab (`RoiTab`) stacks `CurrentFigures`, `TrendChart` (Recharts, one metric at a time, axis and tooltip formatted by type), `ReportForm` (Technical only; typed controls, Duration as h/m/s), `LogHistory` ("Load more"), and the metrics management panel. Any write bumps a refresh key that reloads every section.
 
-## Planned (not yet built)
+## Caching, polling and the background worker (Phase 6)
 
-Caching and invalidation by `DataVersion`, polling (regular + long poll).
+**ROI cache.** `GET .../roi` goes through `CachedRoiService` (a decorator over `RoiService`).
+- Key: `roi:{automationId}:v{DataVersion}:p{points}` (Redis, prefix `metrics:`), TTL `Roi:CacheTtlMinutes` (10).
+- Every request first reads the automation's `DataVersion` (one indexed query), then looks up that exact key. A miss builds the payload from the database and stores it under the version it was built from.
+- Invalidation is implicit: anything that affects ROI data (a report, or a metric definition created or deleted) bumps `DataVersion` in the same save, so the old key is simply never asked for again and expires. Documents do not affect ROI data and do not bump it. There is no invalidate-then-repopulate race because the version always comes from the database first.
+- `IMetricCache` (Application) never throws for infrastructure problems: it returns `Hit`, `Miss` or `Unavailable`. `DistributedMetricCache` (JSON over `IDistributedCache`/Redis) skips the cache for 30 seconds after a failure, so requests do not each wait out Redis timeouts (command timeouts are capped at 1 s). With Redis down the API serves from Postgres.
+- The response carries `X-Cache: HIT | MISS | BYPASS` (set through the per-request `CacheTrace`).
+- `isStale` is computed per request after the cache and is never stored in it.
+
+**Long polling.** `GET .../roi/changes?sinceVersion=N&timeoutSeconds=25&points=30` (any employee).
+- Returns the ROI payload immediately if `DataVersion > N`; otherwise it is held open until a change or the timeout (max 30 s) and then returns 204. The browser loops: on data it updates, on 204 it asks again.
+- `RoiLongPollService` takes a signal from `IChangeNotifier` before reading the version, then waits on the signal or a 5 s re-check, so a write that commits in between cannot be missed. `LogService` and `MetricService` call `Notify` after a successful save.
+- `InProcessChangeNotifier` is single-server. Scaling out means replacing it with Redis pub/sub behind the same interface; the 5 s database re-check bounds the delay for changes made on another server.
+- Client disconnects cancel the waiting request.
+
+**Regular polling.** The catalog re-fetches every 30 s (`usePolling`): paused while the tab is hidden, immediate refresh when it returns, no overlap, an unchanged result causes no re-render, and a failed poll keeps the last good data.
+
+**Background worker.** `RoiCacheWarmerService` (a `BackgroundService`, `Roi:WarmerEnabled`, every `Roi:WarmIntervalSeconds`, first run 5 s after startup) runs `RoiWarmer` once per cycle:
+- warms the ROI cache (default points) for every automation that has at least one report, by reading through the cached service;
+- computes staleness (latest report older than `Roi:StaleAfterDays`, default 14; never-reported is not stale) and writes the stale automation ids to one Redis key (`roi:stale`) with a TTL of three cycles, so a dead worker's flags disappear instead of lingering;
+- the catalog reads those flags to show a "No recent report" badge; the ROI payload also carries `isStale` for the banner on the ROI tab.
+- One failing automation is logged and does not stop the cycle.
+
+**Config** (`Roi` section of `appsettings.json`; none are secrets): `CacheTtlMinutes`, `WarmerEnabled`, `WarmIntervalSeconds`, `StaleAfterDays`, `LongPollMaxSeconds`. Rationale and trade-offs are in DECISIONS D-011.
+
+**Web.** `RoiTab` loads the payload, runs `useRoiLongPoll` (a status dot shows Live / Reconnecting), applies pushed changes to the figures and chart and reloads the history and metrics lists, and shows a banner when the data is stale. In-progress form input is not disturbed by other people's updates.

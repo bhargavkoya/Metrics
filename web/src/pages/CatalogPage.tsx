@@ -4,7 +4,10 @@ import { listAutomations, listDepartments } from '../api/automations'
 import AutomationCard from '../components/AutomationCard'
 import { inputClass } from '../components/AuthForm'
 import { useDebouncedValue } from '../hooks/useDebouncedValue'
+import { usePolling } from '../hooks/usePolling'
 import type { AutomationCard as Card } from '../types'
+
+const CATALOG_POLL_MS = 30_000
 
 // Filters live in the URL so a filtered view survives refresh and can be shared.
 export default function CatalogPage() {
@@ -57,6 +60,17 @@ export default function CatalogPage() {
       .catch((e: Error) => e.name !== 'AbortError' && setError(e.message))
     return () => ctrl.abort()
   }, [q, department, from, to, rangeInvalid])
+
+  // Regular polling keeps the cards fresh (new activity, stale badges). It is quiet: no loading flicker, an unchanged
+  // result keeps the same state so nothing re-renders, and a failed poll just keeps showing the last good data.
+  usePolling(async (signal) => {
+    try {
+      const fresh = await listAutomations({ q, department, from, to }, signal)
+      setItems((prev) => (JSON.stringify(prev) === JSON.stringify(fresh) ? prev : fresh))
+    } catch {
+      /* keep the last good data; the next tick tries again */
+    }
+  }, CATALOG_POLL_MS, !rangeInvalid)
 
   const hasFilters = !!(q || department || from || to)
 

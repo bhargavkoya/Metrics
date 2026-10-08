@@ -16,6 +16,7 @@ public class MetricServiceTests
     private readonly Mock<IMetricRepository> _repo = new();
     private readonly List<MetricDefinition> _live = [];
     private readonly MetricService _sut;
+    private Mock<global::Metrics.Application.Logs.IChangeNotifier> Notifier { get; } = new();
 
     private sealed class FixedClock(DateTimeOffset now) : TimeProvider
     {
@@ -32,7 +33,7 @@ public class MetricServiceTests
             .Callback<MetricDefinition, CancellationToken>((d, _) => _live.Add(d)).Returns(Task.CompletedTask);
         _repo.Setup(r => r.SoftDeleteAsync(It.IsAny<MetricDefinition>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .Callback<MetricDefinition, DateTime, CancellationToken>((d, _, _) => _live.Remove(d)).Returns(Task.CompletedTask);
-        _sut = new MetricService(_repo.Object, new FormulaEngine(), new FixedClock(Now));
+        _sut = new MetricService(_repo.Object, new FormulaEngine(), new FixedClock(Now), Notifier.Object);
     }
 
     private Task<MetricDefinitionDto> AddInput(string label, MetricValueType type, string? currency = null) =>
@@ -57,6 +58,32 @@ public class MetricServiceTests
         Assert.Equal(UserId, stored.CreatedBy);
         Assert.Equal(Now.UtcDateTime, stored.CreatedAt);
         Assert.Equal(AutomationId, stored.AutomationId);
+    }
+
+    [Fact]
+    public async Task CreateAndDelete_SignalTheChange_ButRejectionsDoNot()
+    {
+        var created = await AddInput("Records", MetricValueType.Number);
+        Notifier.Verify(n => n.Notify(AutomationId), Times.Once);
+
+        await Assert.ThrowsAsync<ValidationFailedException>(() => AddInput("", MetricValueType.Number));
+        await Assert.ThrowsAsync<ConflictException>(() => AddInput("records", MetricValueType.Number));
+        Notifier.Verify(n => n.Notify(AutomationId), Times.Once); // still just the one
+
+        await _sut.DeleteAsync(AutomationId, created.Id, default);
+        Notifier.Verify(n => n.Notify(AutomationId), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task BlockedDelete_DoesNotSignal()
+    {
+        var manual = await AddInput("Manual", MetricValueType.Duration);
+        await AddComputed("Doubled", "[Manual] * 2");
+        Notifier.Invocations.Clear();
+
+        await Assert.ThrowsAsync<ConflictException>(() => _sut.DeleteAsync(AutomationId, manual.Id, default));
+
+        Notifier.Verify(n => n.Notify(It.IsAny<Guid>()), Times.Never);
     }
 
     [Fact]

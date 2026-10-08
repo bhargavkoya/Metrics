@@ -1,11 +1,12 @@
 using Metrics.Application.Common;
+using Metrics.Application.Logs;
 using Metrics.Application.Formulas;
 using Metrics.Domain;
 using Metrics.Domain.Entities;
 
 namespace Metrics.Application.Metrics;
 
-public class MetricService(IMetricRepository repo, IFormulaEngine engine, TimeProvider clock) : IMetricService
+public class MetricService(IMetricRepository repo, IFormulaEngine engine, TimeProvider clock, IChangeNotifier notifier) : IMetricService
 {
     public const int MaxLabelLength = 100;
     public const string DefaultCurrency = "USD";
@@ -55,6 +56,7 @@ public class MetricService(IMetricRepository repo, IFormulaEngine engine, TimePr
         if (errors.Count > 0) throw new ValidationFailedException(errors);
 
         await repo.AddAsync(def, ct);
+        notifier.Notify(automationId);
         return ToDto(def);
     }
 
@@ -97,6 +99,7 @@ public class MetricService(IMetricRepository repo, IFormulaEngine engine, TimePr
 
         // Soft delete: removes the metric going forward; logs already recorded keep their snapshotted values.
         await repo.SoftDeleteAsync(def, clock.GetUtcNow().UtcDateTime, ct);
+        notifier.Notify(automationId);
     }
 
     private static void ValidateLabel(string label, Dictionary<string, string[]> errors)

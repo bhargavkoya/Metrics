@@ -10,9 +10,11 @@ interface Props {
   canEdit: boolean
   /** Called after a definition is added or deleted, so figures, chart and the report form can refresh. */
   onChanged?: () => void
+  /** Changes when definitions may have been changed elsewhere (pushed in by the long poll); the list reloads. */
+  reloadKey?: number
 }
 
-export default function MetricsPanel({ automationId, canEdit, onChanged }: Props) {
+export default function MetricsPanel({ automationId, canEdit, onChanged, reloadKey }: Props) {
   const [metrics, setMetrics] = useState<MetricDefinition[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -32,7 +34,7 @@ export default function MetricsPanel({ automationId, canEdit, onChanged }: Props
     const ctrl = new AbortController()
     reload(ctrl.signal)
     return () => ctrl.abort()
-  }, [reload])
+  }, [reload, reloadKey])
 
   async function onDelete(m: MetricDefinition) {
     const consequence =

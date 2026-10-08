@@ -5,7 +5,17 @@ import type { AutomationCard as Card } from '../types'
 export default function AutomationCard({ automation }: { automation: Card }) {
   return (
     <article className="flex flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <span className="w-fit rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{automation.department}</span>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="w-fit rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{automation.department}</span>
+        {automation.isStale && (
+          <span
+            className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800"
+            title="The latest report is older than expected, so the figures may be out of date"
+          >
+            No recent report
+          </span>
+        )}
+      </div>
       <h2 className="mt-2 font-semibold">{automation.name}</h2>
       <p className="mt-1 flex-1 text-sm text-gray-600">{automation.description}</p>
       <div className="mt-4 flex items-center justify-between">

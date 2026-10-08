@@ -31,9 +31,10 @@ public record SeriesDto(
     string? CurrencyCode, IReadOnlyList<SeriesPointDto> Points);
 
 /// <param name="DataVersion">Bumps on every write that affects this payload; used for cache keys and long polling.</param>
+/// <param name="IsStale">Reporting is overdue (latest report older than the threshold). Computed per request, never cached.</param>
 public record RoiDto(
     Guid AutomationId, long DataVersion, DateTime? AsOf, string? ReportedBy,
-    IReadOnlyList<CurrentFigureDto> Current, IReadOnlyList<SeriesDto> Series);
+    IReadOnlyList<CurrentFigureDto> Current, IReadOnlyList<SeriesDto> Series, bool IsStale = false);
 
 public record LogWithReporter(MetricLog Log, string Reporter);
 
@@ -51,6 +52,9 @@ public interface ILogRepository
     Task<List<LogWithReporter>> GetRecentAsync(Guid automationId, int take, CancellationToken ct);
 
     Task<long> GetDataVersionAsync(Guid automationId, CancellationToken ct);
+
+    /// <summary>Automations with at least one report; the background worker warms and checks these.</summary>
+    Task<List<Guid>> GetAutomationIdsWithLogsAsync(CancellationToken ct);
 }
 
 public interface ILogService

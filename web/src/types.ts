@@ -25,6 +25,8 @@ export interface AutomationCard {
   description: string
   department: string
   lastActivityAt: string
+  /** The background worker flagged this automation: its latest report is overdue. */
+  isStale: boolean
 }
 
 export interface AutomationDetail extends AutomationCard {
@@ -128,4 +130,5 @@ export interface RoiData {
   reportedBy: string | null
   current: CurrentFigure[]
   series: Series[]
+  isStale: boolean
 }

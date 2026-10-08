@@ -73,7 +73,7 @@ public class EfAutomationRepositoryTests : IDisposable
         var opts = new DbContextOptionsBuilder<MetricsDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
         _db = new MetricsDbContext(opts);
-        _sut = new AutomationService(new EfAutomationRepository(_db));
+        _sut = new AutomationService(new EfAutomationRepository(_db), new global::Metrics.Application.Logs.CacheStaleFlagStore(new global::Metrics.Tests.Caching.FakeCache()));
 
         Add("Trade Reconciliation Bot", "Matches trades", "Investment Operations", daysAgo: 2);
         Add("Capital Report Builder", "Weekly pack from ledgers", "Capital Allocation", daysAgo: 10);
