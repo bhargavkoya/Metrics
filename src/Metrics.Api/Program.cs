@@ -21,9 +21,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Optional, gitignored override for real secrets; placeholders stay tracked in appsettings.json.
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
 
-builder.Services.AddControllers()
+builder.Services.AddControllers(o => o.Filters.Add<ApiExceptionFilter>())
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
-builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<IAuthService, AuthService>();
