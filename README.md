@@ -51,8 +51,12 @@ dotnet test --filter "FullyQualifiedName~SomeTestClass.SomeMethod"   # single te
 
 ## Status
 
-Phase 0 (scaffolding) and Phase 1 (auth and team assignment) done. Phase 2 (automation catalog with filters) and Phase 3 (related documents) and Phase 4 (formula engine and metric definitions) done. Reporting metric values is next.
+Phase 0 (scaffolding) and Phase 1 (auth and team assignment) done. Phase 2 (automation catalog with filters) and Phase 3 (related documents) and Phase 4 (formula engine and metric definitions) and Phase 5 (reporting, chart, history) done. Caching and polling are next.
 
 ## Uploads
 
 Related documents are stored on local disk under `Storage:UploadsPath` (default `src/Metrics.Api/uploads`, gitignored) with GUID file names; metadata lives in PostgreSQL. Allowed types: PDF, DOCX, XLSX, PNG, JPG; max 10 MB.
+
+## Demo data
+
+In Development the API seeds the "Trade Reconciliation Bot" automation with typed metrics (records, manual and automated time per run, manual and automated cost per run), two computed metrics (time saved, cost saved) and 12 historical reports, so the ROI tab has a chart and history on first run. Log in as a Technical user to report new values.

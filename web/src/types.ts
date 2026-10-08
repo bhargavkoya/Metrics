@@ -68,3 +68,64 @@ export interface ValidateFormulaResult {
   references: string[]
   errors: FormulaError[]
 }
+
+export type LogValueRole = 'Input' | 'Computed'
+
+export interface LogValue {
+  metricDefinitionId: string
+  label: string
+  valueType: MetricValueType
+  currencyCode: string | null
+  role: LogValueRole
+  value: number | null
+  formula: string | null
+}
+
+export interface LogEntry {
+  id: string
+  reportedAt: string
+  reportedBy: string
+  values: LogValue[]
+}
+
+export interface Paged<T> {
+  items: T[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+export interface CurrentFigure {
+  metricDefinitionId: string
+  label: string
+  kind: MetricKind
+  valueType: MetricValueType
+  currencyCode: string | null
+  formula: string | null
+  hasValue: boolean
+  value: number | null
+}
+
+export interface SeriesPoint {
+  logId: string
+  reportedAt: string
+  value: number | null
+}
+
+export interface Series {
+  metricDefinitionId: string
+  label: string
+  kind: MetricKind
+  valueType: MetricValueType
+  currencyCode: string | null
+  points: SeriesPoint[]
+}
+
+export interface RoiData {
+  automationId: string
+  dataVersion: number
+  asOf: string | null
+  reportedBy: string | null
+  current: CurrentFigure[]
+  series: Series[]
+}

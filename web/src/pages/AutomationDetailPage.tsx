@@ -4,7 +4,7 @@ import { getAutomation } from '../api/automations'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/authContext'
 import DocumentsSection from '../components/DocumentsSection'
-import MetricsPanel from '../components/metrics/MetricsPanel'
+import RoiTab from '../components/roi/RoiTab'
 import { formatDate } from '../lib/format'
 import type { AutomationDetail } from '../types'
 
@@ -98,7 +98,7 @@ export default function AutomationDetailPage() {
         </>
       )}
 
-      {tab === 'roi' && <MetricsPanel automationId={automation.id} canEdit={isTechnical} />}
+      {tab === 'roi' && <RoiTab automationId={automation.id} canEdit={isTechnical} />}
     </div>
   )
 }

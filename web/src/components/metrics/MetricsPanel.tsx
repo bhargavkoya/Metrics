@@ -5,7 +5,14 @@ import type { MetricDefinition } from '../../types'
 import AddComputedForm from './AddComputedForm'
 import AddInputForm from './AddInputForm'
 
-export default function MetricsPanel({ automationId, canEdit }: { automationId: string; canEdit: boolean }) {
+interface Props {
+  automationId: string
+  canEdit: boolean
+  /** Called after a definition is added or deleted, so figures, chart and the report form can refresh. */
+  onChanged?: () => void
+}
+
+export default function MetricsPanel({ automationId, canEdit, onChanged }: Props) {
   const [metrics, setMetrics] = useState<MetricDefinition[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -37,6 +44,7 @@ export default function MetricsPanel({ automationId, canEdit }: { automationId: 
     try {
       await deleteMetric(automationId, m.id)
       await reload()
+      onChanged?.()
     } catch (e) {
       setActionError(errorMessage(e))
     }
@@ -89,8 +97,8 @@ export default function MetricsPanel({ automationId, canEdit }: { automationId: 
 
       {canEdit && metrics && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <AddInputForm automationId={automationId} onCreated={() => reload()} />
-          <AddComputedForm automationId={automationId} inputs={inputs} onCreated={() => reload()} />
+          <AddInputForm automationId={automationId} onCreated={() => void reload().then(onChanged)} />
+          <AddComputedForm automationId={automationId} inputs={inputs} onCreated={() => void reload().then(onChanged)} />
         </div>
       )}
     </section>

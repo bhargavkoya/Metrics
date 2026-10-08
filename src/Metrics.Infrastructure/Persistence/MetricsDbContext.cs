@@ -62,6 +62,8 @@ public class MetricsDbContext(DbContextOptions<MetricsDbContext> options) : DbCo
         {
             e.Property(x => x.Value).HasPrecision(28, 10);
             e.Property(x => x.LabelSnapshot).HasMaxLength(200);
+            e.Property(x => x.CurrencyCodeSnapshot).HasMaxLength(3);
+            e.Property(x => x.FormulaSnapshot).HasMaxLength(1000);
             e.Property(x => x.Role).HasConversion<string>().HasMaxLength(20);
             e.Property(x => x.ValueTypeSnapshot).HasConversion<string>().HasMaxLength(20);
             // No FK to MetricDefinition on purpose: history must survive definition changes.
