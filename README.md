@@ -2,6 +2,12 @@
 
 Base-level POC: a catalog of automation projects, each with typed input metrics, optional computed (formula) metrics, metric logs, and a trend chart. See `CLAUDE.md` for conventions, `docs/ARCHITECTURE.md` for design and `docs/DECISIONS.md` for the decision log.
 
+## Demo video
+
+[![Watch the demo on YouTube](https://img.youtube.com/vi/-_QVaMAggSI/maxresdefault.jpg)](https://youtu.be/-_QVaMAggSI)
+
+Watch the walkthrough on YouTube: https://youtu.be/-_QVaMAggSI
+
 **Presenting it:** [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) (timed 5-minute run) and [docs/INTERVIEW_NOTES.md](docs/INTERVIEW_NOTES.md) (design stories, limits, likely questions).
 
 **Step-by-step local testing (run it, then walk through every feature): [docs/LOCAL_TESTING.md](docs/LOCAL_TESTING.md).**

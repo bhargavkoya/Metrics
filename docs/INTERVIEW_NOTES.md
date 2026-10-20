@@ -2,6 +2,8 @@
 
 How to talk about this project: the pitch, the design decisions in the order you would explain them, the bugs found along the way, the honest limits, and likely questions with answers. Every number here comes from the code or the decision log (`docs/DECISIONS.md`, D-001 to D-012); if something changes, update both.
 
+Recorded demo to share with interviewers: https://youtu.be/-_QVaMAggSI
+
 ## The 30-second pitch
 
 "It replaces a tool that only dumped raw metric logs. Each automation project gets a home page (client, requirement, documents) and an ROI tab where the Technical team defines *its own typed metrics*, optionally adds a *computed metric* built from a formula, and reports values. A hand-written, typed formula engine validates formulas when they are saved. Every report stores a snapshot of its inputs and computed values, so history never changes. The ROI read is cached in Redis, the page updates by long polling, and a background worker warms the cache and flags overdue reporting."
