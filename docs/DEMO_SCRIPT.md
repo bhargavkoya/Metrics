@@ -1,5 +1,7 @@
 # 5-minute demo script
 
+Recorded demo: https://youtu.be/-_QVaMAggSI
+
 A timed run for screen-sharing. It follows the PRD's end-to-end flow and is ordered so the most impressive and the riskiest parts land when you are confident. Read the pre-flight list the day before and again 15 minutes before.
 
 ## Pre-flight (15 minutes before)

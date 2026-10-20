@@ -2,6 +2,8 @@
 
 Everything below was written for Windows (PowerShell) and checked against this repository. Run the commands from the repository root unless a step says otherwise.
 
+To see the finished app before setting anything up, watch the recorded demo: https://youtu.be/-_QVaMAggSI
+
 ## 0. What you need
 
 | Tool | Check with | Notes |
