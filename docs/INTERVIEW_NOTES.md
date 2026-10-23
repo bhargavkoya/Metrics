@@ -2,6 +2,8 @@
 
 How to talk about this project: the pitch, the design decisions in the order you would explain them, the bugs found along the way, the honest limits, and likely questions with answers. Every number here comes from the code or the decision log (`docs/DECISIONS.md`, D-001 to D-012); if something changes, update both.
 
+Deeper architect-level questions (30, with answers): `docs/INTERVIEW_QA.md`.
+
 Recorded demo to share with interviewers: https://youtu.be/-_QVaMAggSI
 
 ## The 30-second pitch
